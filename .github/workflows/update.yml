@@ -1,0 +1,30 @@
+name: Daily Playlist Update
+
+on:
+  schedule:
+    - cron: "0 16 * * *"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Update index.m3u8
+        run: |
+          DAY=$(date +%d)
+          NUM=$(( (DAY - 1) % 2 + 1 ))
+          echo "#EXTM3U" > index.m3u8
+          echo "#EXT-X-VERSION:3" >> index.m3u8
+          echo "#EXT-X-STREAM-INF:BANDWIDTH=1" >> index.m3u8
+          echo "day${NUM}.m3u8" >> index.m3u8
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add index.m3u8
+          git commit -m "Daily update" || echo "No changes"
+          git push
